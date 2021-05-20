@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
+    <title>Minimal Mini Spotify</title>
+
+</head>
+<body>
+    <style>
+        :root{
+            --white-text: #ffffff;
+            --background: #121212;
+            --main: rgb(100,100,100);
+            --disabled: #555;
+        }
+
+        html, body {
+            background-color: var(--background);
+            color: var(--main);
+            overflow: visible;
+        }
+        
+        nav {
+            z-index: 10;
+            background-color: transparent;
+            position: fixed;
+            top: 0;
+        }
+
+        .color {
+            color: var(--main);
+            transition: color ease-in-out 0.3s !important;
+        }
+
+        #progress::-webkit-slider-runnable-track {
+            background-color: transparent;
+        }
+        #progress {
+            background: #00000000;
+            opacity: 0;
+            color: transparent;
+            z-index: 10;
+            height: 16px;
+        }
+
+        .progress {
+            width: 100vw;
+            position: fixed;
+            bottom: 0;
+            height: 16px;
+            left: 0;
+            background-color: #20202020;
+            transition: opacity 0.3s ease-in-out !important;
+        }
+        #progress_bar {
+            height: 16px;
+            background-color: var(--main);
+            width: 0%;
+            border-radius: 0 10px 10px 0;
+            transition: all 0.5s linear !important;
+            transition: opacity 0.2s linear;
+            opacity: 0.6;
+        }
+        #progress_bar:hover {
+            opacity: 1;
+        }
+
+        #bg_image{
+            z-index: -2;
+            height: 100%;
+            width: 100%;
+            transition: background-image 0.3s ease-in-out !important;
+            transition: opacity 0.3s ease-in-out !important;
+            background-image: none;
+            background-position: center;
+            background-repeat: repeat;
+            background-size: cover;
+            opacity: 0.2;
+            filter: blur(5px) opacity(0.4);
+            -webkit-filter: blur(5px) opacity(0.4); 
+            position: fixed;
+            display: block;
+        }
+        #bg {
+            z-index: -1;
+            height: 100%;
+            width: 100%;
+            transition: all 0.3s ease-in-out !important;
+            position: fixed;
+            display: block;
+            background: radial-gradient(ellipse at bottom, transparent, #000000);
+            background-color: var(--main);
+            opacity: 0;
+        }
+
+        .draggable {
+            width: max-content;
+            -webkit-user-select: none;
+            -webkit-app-region: drag;
+        }
+
+        .main_view {
+            z-index: 1;
+            position: fixed;
+            top: 2vh;
+            left: 0vw;
+            margin: 0vh 0vw;
+            width: 98vw;
+            opacity: 1;
+            transition: opacity 0.3s ease-in-out !important;
+        }
+
+        .controls {
+            z-index: 1;
+            position: fixed;
+            bottom: 30px;
+            width: 98vw;
+            margin: 1px 6vw;
+            transition: opacity 0.3s ease-in-out !important;
+        }
+
+        .controls .btn {
+            border-radius: 50%;
+            background-color: var(--main);
+            transition: all 0.3s ease-in-out !important;
+        }
+        .controls .btn:hover {
+            opacity: 0.7;
+        }
+
+        .main-btn {
+            padding-bottom: 8px;
+        }
+
+        .volume_container {
+            z-index: 1;
+            position: fixed;
+            bottom: 32px;
+            right: 25px;
+        }
+
+        #volume::-webkit-slider-runnable-track {
+            background-color: #a0a0a0;
+        }
+
+        #volume::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            background: var(--main);
+            cursor: pointer;
+        }
+
+        #error_div{
+            height: 100vh;
+            width: 100vw;
+            position: absolute;
+            z-index: 100;
+            opacity: 0;
+            overflow: hidden;
+            background-color: #00000000;
+            backdrop-filter: blur(15px) brightness(.6);
+            transition: opacity 0.5s ease-in-out !important;
+        }
+
+    </style>
+
+    <div id="error_div" class="container-fluid" style="display: none;">
+        <div class="row">
+            <div class="col-12 position-absolute top-50 start-50 translate-middle text-center">
+                <h3>Something went wrong...</h3>
+                <p>Check your internet connection, then restart the application</p>
+                <button type="button" onclick="window.close()" class="btn btn-sm btn-outline-danger">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <nav class="navbar fixed-top">
+        <div class="container-fluid">
+            <div class="draggable col">
+            <span class="navbar-brand mb-0 h1"></span>
+        </div>               
+        <button id="close-btn" type="button" onclick="window.close()" class="btn btn-sm btn-outline-danger" style="float: right;">&#x2715;</button>
+    </div>
+        
+    </nav>
+
+    <div id="bg">
+        <div id="bg_image"></div>
+    </div>
+    
+
+    <div id="details" class="container main_view">
+        <div class="row">
+            <div class="col">
+                <div class="text-left">
+                    <h1 id="song_name" class="song_text text-bold">Song</h1>
+                    <h4 id="artist" class="song_text">Artist</h4>
+                    <p id="progress_time" class="no_margin"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container controls">
+        <div class="row">
+            <div class="col text-center">
+                <a class="main-btn btn" id="shuffle" onclick="toggle_shuffle()"><img src="assets/icons/shuffle.svg"></a>
+                <a class="main-btn btn" onclick="set_prev()"><img id="" src="assets/icons/chevron-left.svg"></a>
+                <a class="main-btn play-btn btn" onclick="play_btn()"><img id="play_btn" src="assets/icons/play-fill.svg"></a>
+                <a class="main-btn btn" onclick="set_next()"><img id="" src="assets/icons/chevron-right.svg"></a>
+                <a class="main-btn btn" id="repeat" onclick="toggle_repeat()"><img id="repeat-img" src="assets/icons/arrow-repeat.svg"></a>
+            </div>
+        </div>
+    </div>
+    <div class="volume_container">
+        <input type="range" class="form-range" min="0" max="100" id="volume" oninput="set_volume()">
+    </div>
+    <div id="progress_container" class="progress">
+        <div id="progress_bar">
+            <input type="range" class="progress form-range" min="0" max="0" id="progress" oninput="set_seek()">
+        </div>
+    </div>
+
+    <script>
+        const { ipcRenderer } = require('electron')
+        
+        var data;
+        var is_playing = false;
+
+        function get_data() {
+            ipcRenderer.send('spotify-data', 'get');
+        }
+
+        ipcRenderer.on('spotify-data', (event, arg) => {
+            if (arg == 'ERROR') {
+                document.getElementById('error_div').style.display = 'block';
+                sleep(100);
+                document.getElementById('error_div').style.opacity = 1;
+            }
+            else {
+                data = arg;
+                update_screen(data);
+            }
+        })
+
+        ipcRenderer.on('error', (event, arg) => {
+            document.getElementById('error_div').style.display = 'block';
+            sleep(100);
+            document.getElementById('error_div').style.opacity = 1;
+        })
+
+        function pad(str, max) {
+            str = str.toString();
+            return str.length < max ? pad("0" + str, max) : str;
+        }
+        function ms_to_time(ms) {
+            return ( Math.floor((ms/1000)/60) + ':' + pad(Math.floor(ms/1000)-(Math.floor((ms/1000)/60)*60), 2))
+        }
+
+        function update_screen(data) {
+            is_playing = data.is_playing;
+
+            if (is_playing) {
+                document.getElementById('play_btn').src = 'assets/icons/pause-fill.svg';
+            }
+            else if (!is_playing) {
+                document.getElementById('play_btn').src = 'assets/icons/play-fill.svg';
+            }
+
+            document.getElementById('progress').max = data.item.duration_ms;
+            document.getElementById('progress').value = data.progress_ms;
+
+            document.getElementById('volume').value = data.device.volume_percent;
+
+            let progress_percent = 100*(data.progress_ms / data.item.duration_ms);
+            document.getElementById('progress_bar').setAttribute('style', 'width:' + progress_percent + 'vw')
+
+            document.getElementById('song_name').innerText = data.item.name;
+            document.getElementById('artist').innerText = data.item.artists[0].name;
+            
+            change_img(data.item.album.images[0].url)
+
+            if (data.shuffle_state) {
+                document.getElementById('shuffle').style.backgroundColor = 'var(--main)';
+            }
+            else if (!data.shuffle_state) {
+                document.getElementById('shuffle').style.backgroundColor = 'var(--disabled)';
+            }
+
+            if (data.repeat_state == "off") {
+                document.getElementById('repeat').style.backgroundColor = 'var(--disabled)';
+                document.getElementById('repeat-img').src = 'assets/icons/arrow-repeat.svg';
+            }
+            else if (data.repeat_state == "context") {
+                document.getElementById('repeat').style.backgroundColor = 'var(--main)';
+                document.getElementById('repeat-img').src = 'assets/icons/arrow-repeat.svg';
+            }
+            else if (data.repeat_state == "track") {
+                document.getElementById('repeat').style.backgroundColor = 'var(--main)';
+                document.getElementById('repeat-img').src = 'assets/icons/repeat-one.svg';
+            }
+        }
+
+        async function change_img(path) {
+            if (('url("' + path + '")') != document.getElementById('bg_image').style.backgroundImage) {
+                get_color(path);
+                document.getElementById('bg').style.opacity = 0;
+                //document.getElementById('playing_art').style.opacity = 0;
+                await sleep(300);
+                document.getElementById('bg_image').style.backgroundImage = 'url("' + path + '")';
+                //document.getElementById('playing_art').src = path;
+                document.getElementById('bg').style.opacity = 0.5;
+                //document.getElementById('playing_art').style.opacity = 1;
+            }
+        }
+
+        function play_btn() {
+            if (is_playing) {
+                set_pause();
+            }
+            else {
+                set_play();
+            }
+        }
+
+        function get_color(path) {
+            ipcRenderer.send('vibrant-colors', path);
+        }
+        ipcRenderer.on('vibrant-colors', (event, arg) => {
+            document.documentElement.style.setProperty('--main', arg);
+        })
+
+        function set_play() {
+            ipcRenderer.send('spotify-play', '');
+        }
+        function set_pause() {
+            ipcRenderer.send('spotify-pause', '');
+        }
+        function set_next() {
+            ipcRenderer.send('spotify-next', '');
+        }
+        function set_prev() {
+            ipcRenderer.send('spotify-prev', '');
+        }
+        function set_seek() {
+            ipcRenderer.send('spotify-seek', document.getElementById('progress').value);
+        }
+        function set_volume() {
+            ipcRenderer.send('spotify-volume', document.getElementById('volume').value);
+        }
+        function toggle_shuffle() {
+            if (data.shuffle_state) {
+                ipcRenderer.send('spotify-shuffle', false);
+            }
+            else if (!data.shuffle_state) {
+                ipcRenderer.send('spotify-shuffle', true);
+            }
+        }
+        function toggle_repeat() {
+            if (data.repeat_state == "off") {
+                ipcRenderer.send('spotify-repeat', "context");
+            }
+            else if (data.repeat_state == "context") {
+                ipcRenderer.send('spotify-repeat', "track");
+            }
+            else if (data.repeat_state == "track") {
+                ipcRenderer.send('spotify-repeat', "off");
+            }
+        }
+        
+
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+        async function delayed(time) {
+            while (true) {
+                get_data();
+                await sleep(time);
+            }   
+        }
+        delayed(500);
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-gtEjrD/SeCtmISkJkNUaaKMoLD0//ElJ19smozuHV6z3Iehds+3Ulb9Bn9Plx0x4" crossorigin="anonymous"></script>
+</body>
+</html>

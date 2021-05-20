@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
+    <title>Minimal Mini Spotify</title>
+
+</head>
+<body>
+    <style>
+        :root{
+            --white-text: #ffffff;
+            --background: #121212;
+        }
+
+        html, body {
+            background-color: var(--background);
+            color: var(--white-text);
+        }
+        .draggable{
+            -webkit-user-select: none;
+            -webkit-app-region: drag;
+        }
+
+        #signin{
+            z-index: 1;
+            position: fixed;
+            top: 30vh;
+            margin: 0vh 0vw;
+            width: -webkit-fill-available;
+            text-align: center;
+            align-items: center;
+        }
+        #signin-btn{
+            border-width: 0;
+            background: #1db954;
+            opacity: 1;
+            transition: all 0.3s ease-in-out !important;
+            border-radius: 50px;
+            height: fit-content;
+            padding: 12px 15px 10px 15px;
+            box-shadow: 0px 0px 0px #1db954;
+            
+        }
+        #signin-btn:hover{
+            box-shadow: 0px 0px 20px #1db954;
+        }
+
+    </style>
+
+    <nav class="navbar navbar-dark">
+        <div class="container-fluid">
+            <div class="draggable col">
+                <span class="navbar-brand mb-0 h1"></span>
+            </div>               
+            <button id="close-btn" type="button" onclick="window.close()" class="btn btn-sm btn-outline-danger" style="float: right;">&#x2715;</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="position-absolute top-50 start-50 translate-middle text-center">
+            <h4 class="mb-2">Login with Spotify</h4>
+            <button id="signin-btn" onclick="signin()" class=""><img src="assets/icons/spotify-white.png" width="120px" alt="Login to Spotify"></button>
+        </div>
+    </div>
+
+    <script>
+        const { ipcRenderer } = require('electron')
+
+        function signin() {
+            ipcRenderer.send('spotify-oauth', 'getToken');
+        }
+
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-gtEjrD/SeCtmISkJkNUaaKMoLD0//ElJ19smozuHV6z3Iehds+3Ulb9Bn9Plx0x4" crossorigin="anonymous"></script>
+</body>
+</html>
